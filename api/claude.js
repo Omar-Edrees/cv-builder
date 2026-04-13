@@ -16,7 +16,7 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{
-            parts: [{ text: (system || '') + '\n\n' + (userMessage || '') }]
+           parts: [{ text: (system || '') + '\n\n' + (userMessage || '') + '\n\nIMPORTANT: Return ONLY raw JSON. No markdown, no backticks, no explanation.' }]
           }],
           generationConfig: { maxOutputTokens: maxTokens || 4000 }
         })
