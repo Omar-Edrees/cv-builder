@@ -1047,9 +1047,9 @@ function animateLoading() {
   activate();
 }
 
-// ==================== CLAUDE API ====================
-async function callClaude(systemPrompt, userMessage, maxTokens = 4000) {
-  const response = await fetch('/api/claude', {
+// ==================== GEMINI API ====================
+async function callGemini(systemPrompt, userMessage, maxTokens = 4000) {
+  const response = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -1076,7 +1076,7 @@ async function analyzeCV(cvText) {
   animateLoading();
   try {
     const system = T[lang].systemAnalyze(jobTitle);
-    const result = await callClaude(system, cvText, 4000);
+    const result = await callGemini(system, cvText, 4000);
     analysisResult = parseJSON(result);
 
     // Check missing info
@@ -1106,7 +1106,7 @@ async function buildCVFromScratch() {
     const userMsg = Object.entries(scratchAnswers)
       .map(([k,v]) => `${k}: ${v}`)
       .join('\n');
-    const result = await callClaude(system, userMsg, 4000);
+    const result = await callGemini(system, userMsg, 4000);
     const data = parseJSON(result);
     document.getElementById('cv-preview-scratch').innerHTML = data.cv_html;
     go('s-cv-result');
@@ -1125,7 +1125,7 @@ async function buildCVAfterExtra() {
       ? `أنت خبير CV. بناءً على تحليل الـ CV السابق والمعلومات الإضافية، أنشئ الـ CV المحسّن النهائي. أعد JSON فقط: {"improved_cv_html":"<div class='cv-name'>...</div>..."}`
       : `You are a CV expert. Based on the previous CV analysis and additional information, create the final improved CV. Return ONLY JSON: {"improved_cv_html":"<div class='cv-name'>...</div>..."}`;
     const userMsg = `CV الأصلي:\n${extractedText}\n\nمعلومات إضافية:\n${extraInfo}`;
-    const result = await callClaude(system, userMsg, 4000);
+    const result = await callGemini(system, userMsg, 4000);
     const data = parseJSON(result);
     analysisResult.improved_cv_html = data.improved_cv_html;
     renderResults();
