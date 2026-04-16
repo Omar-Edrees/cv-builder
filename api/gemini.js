@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     const { system, userMessage, maxTokens } = req.body;
 
     const apiKey = "AIzaSyDZKI-z099OWE09AE2xP4IlKVHS9lByJi4";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite-preview-06-17:generateContent?key=${apiKey}`;
 
     const body = {
       contents: [
