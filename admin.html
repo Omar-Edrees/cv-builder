@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ProfitLens Pro — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090f;--bg2:#0c1018;--surf:#111722;--surf2:#171f2e;--surf3:#1e2840;
+  --bdr:rgba(255,255,255,.07);--bdr2:rgba(255,255,255,.13);
+  --c1:#00e5a0;--c2:#3b82f6;--c3:#f59e0b;--c4:#a78bfa;--red:#f43f5e;
+  --txt:#e8edf5;--txt2:#8896ab;--txt3:#3d4f66;
+  --mono:'JetBrains Mono',monospace;--head:'Syne',sans-serif;--body:'Outfit',sans-serif;
+}
+html,body{min-height:100vh;font-family:var(--body);background:var(--bg);color:var(--txt);font-size:13px;-webkit-font-smoothing:antialiased}
+
+/* Nav */
+.topnav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;background:var(--bg);border-bottom:1px solid var(--bdr)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:28px;height:28px;border-radius:7px;background:var(--c1);display:flex;align-items:center;justify-content:center}
+.brand-mark svg{width:14px;height:14px;fill:none;stroke:#000;stroke-width:2.2;stroke-linecap:round}
+.brand-name{font-family:var(--head);font-size:15px;font-weight:700;letter-spacing:-.3px}
+.badge{font-size:9px;font-family:var(--mono);background:var(--red);color:#fff;padding:2px 6px;border-radius:3px;font-weight:500}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-right a{font-size:12px;color:var(--txt2);text-decoration:none}
+.nav-right a:hover{color:var(--c1)}
+
+/* Main */
+.main{max-width:1100px;margin:0 auto;padding:32px 24px}
+.page-title{font-family:var(--head);font-size:24px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+.page-sub{color:var(--txt2);font-size:13px;margin-bottom:28px}
+
+/* Stats row */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.stat{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:18px 20px}
+.stat-val{font-family:var(--head);font-size:28px;font-weight:700;letter-spacing:-.5px}
+.stat-lbl{font-size:11px;color:var(--txt2);margin-top:4px}
+.stat.green .stat-val{color:var(--c1)}
+.stat.blue .stat-val{color:var(--c2)}
+.stat.amber .stat-val{color:var(--c3)}
+.stat.purple .stat-val{color:var(--c4)}
+
+/* Table card */
+.tcard{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
+.tcard-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bdr)}
+.tcard-title{font-family:var(--head);font-size:14px;font-weight:700}
+
+/* Search */
+.search-wrap{position:relative}
+.search-wrap input{height:32px;padding:0 12px 0 32px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:8px;color:var(--txt);font-family:var(--body);font-size:12px;outline:none;width:220px;transition:border-color .2s}
+.search-wrap input:focus{border-color:var(--c1)}
+.search-wrap::before{content:'⌕';position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:14px;pointer-events:none}
+
+/* Table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--txt3);font-weight:600;border-bottom:1px solid var(--bdr);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--bdr);font-size:12px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* Badges */
+.role-badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.role-admin{background:rgba(244,63,94,.15);color:#f87191}
+.role-user{background:rgba(59,130,246,.1);color:#60a5fa}
+
+/* Action buttons */
+.action-btn{height:26px;padding:0 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;font-family:var(--body);border:1px solid var(--bdr2);background:transparent;color:var(--txt2)}
+.action-btn:hover{background:var(--surf3);color:var(--txt)}
+.action-btn.danger{border-color:rgba(244,63,94,.3);color:#f87191}
+.action-btn.danger:hover{background:rgba(244,63,94,.1)}
+.action-btn.promote{border-color:rgba(245,158,11,.3);color:var(--c3)}
+.action-btn.promote:hover{background:rgba(245,158,11,.1)}
+.action-btn.demote{border-color:rgba(59,130,246,.3);color:#60a5fa}
+.action-btn.demote:hover{background:rgba(59,130,246,.1)}
+
+/* Empty state */
+.empty{text-align:center;padding:48px;color:var(--txt3)}
+.empty-icon{font-size:32px;margin-bottom:12px}
+
+/* Loading */
+.loading-row td{text-align:center;padding:32px;color:var(--txt2)}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--bdr2);border-top-color:var(--c1);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--surf);border:1px solid var(--bdr2);border-radius:10px;padding:12px 16px;font-size:12px;color:var(--txt);box-shadow:0 8px 24px rgba(0,0,0,.4);transition:all .2s;display:none}
+#toast.show{display:block}
+#toast.ok{border-color:rgba(0,229,160,.4);color:var(--c1)}
+#toast.err{border-color:rgba(244,63,94,.4);color:#f87191}
+
+/* Access denied */
+#access_denied{display:none;text-align:center;padding:80px 24px;color:var(--txt3)}
+#access_denied .icon{font-size:48px;margin-bottom:16px}
+
+/* Confirm modal */
+.modal-bg{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--surf);border:1px solid var(--bdr2);border-radius:14px;padding:28px;max-width:380px;width:90%}
+.modal-title{font-family:var(--head);font-size:16px;font-weight:700;margin-bottom:8px}
+.modal-sub{font-size:12px;color:var(--txt2);margin-bottom:22px;line-height:1.6}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.modal-btn{height:34px;padding:0 16px;border-radius:8px;font-size:12px;cursor:pointer;font-family:var(--body);font-weight:500;border:1px solid var(--bdr2);background:transparent;color:var(--txt2);transition:all .15s}
+.modal-btn:hover{background:var(--surf3)}
+.modal-btn.confirm-del{background:var(--red);border-color:var(--red);color:#fff}
+.modal-btn.confirm-del:hover{filter:brightness(1.1)}
+
+@media(max-width:640px){
+  .stats{grid-template-columns:1fr 1fr}
+  .main{padding:16px}
+  .search-wrap input{width:140px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-mark"><svg viewBox="0 0 14 14"><polyline points="1,11 5,6 8,9 13,3"/></svg></div>
+    <span class="brand-name">ProfitLens</span>
+    <span class="badge">ADMIN</span>
+  </div>
+  <div class="nav-right">
+    <a href="/app.html">← Back to App</a>
+    <a href="#" onclick="doLogout()">Sign out</a>
+  </div>
+</nav>
+
+<div class="main" id="admin_main" style="display:none">
+  <div class="page-title">Admin Dashboard</div>
+  <div class="page-sub" id="admin_email_sub">Manage all users and their accounts</div>
+
+  <div class="stats" id="stats_row">
+    <div class="stat green"><div class="stat-val" id="s_total">—</div><div class="stat-lbl">Total Users</div></div>
+    <div class="stat blue"><div class="stat-val" id="s_active">—</div><div class="stat-lbl">With Data</div></div>
+    <div class="stat amber"><div class="stat-val" id="s_admins">—</div><div class="stat-lbl">Admins</div></div>
+    <div class="stat purple"><div class="stat-val" id="s_today">—</div><div class="stat-lbl">Joined Today</div></div>
+  </div>
+
+  <div class="tcard">
+    <div class="tcard-header">
+      <div class="tcard-title">Users</div>
+      <div class="search-wrap">
+        <input type="search" id="search_input" placeholder="Search email..." oninput="filterTable(this.value)">
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Joined</th>
+            <th>Last Sign In</th>
+            <th>Has Data</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users_tbody">
+          <tr class="loading-row"><td colspan="6"><span class="spinner"></span>Loading users…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="access_denied">
+  <div class="icon">🔒</div>
+  <div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:8px">Access Denied</div>
+  <div style="margin-bottom:20px">You need admin privileges to view this page.</div>
+  <a href="/app.html" style="color:var(--c1);text-decoration:none;font-size:13px">← Back to App</a>
+</div>
+
+<!-- Confirm delete modal -->
+<div class="modal-bg" id="confirm_modal">
+  <div class="modal">
+    <div class="modal-title">Delete User</div>
+    <div class="modal-sub" id="confirm_text">Are you sure you want to delete this user? All their data will be permanently removed.</div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn confirm-del" id="confirm_btn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let sb, allUsers = [], pendingDeleteId = null;
+
+(async function init() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('Config missing');
+    sb = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.replace('/'); return; }
+
+    // Verify admin via API endpoint
+    const res = await fetch('/api/admin/users', {
+      headers: { 'Authorization': 'Bearer ' + session.access_token }
+    });
+
+    if (res.status === 403) {
+      document.getElementById('access_denied').style.display = 'block';
+      return;
+    }
+    if (!res.ok) throw new Error('API error');
+
+    const data = await res.json();
+    allUsers = data.users || [];
+
+    document.getElementById('admin_main').style.display = 'block';
+    document.getElementById('admin_email_sub').textContent = 'Signed in as ' + session.user.email;
+
+    updateStats(allUsers);
+    renderTable(allUsers);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('access_denied').style.display = 'block';
+  }
+})();
+
+function updateStats(users) {
+  const today = new Date().toDateString();
+  document.getElementById('s_total').textContent = users.length;
+  document.getElementById('s_active').textContent = users.filter(u => u.has_data).length;
+  document.getElementById('s_admins').textContent = users.filter(u => u.role === 'admin').length;
+  document.getElementById('s_today').textContent = users.filter(u => new Date(u.created_at).toDateString() === today).length;
+}
+
+function renderTable(users) {
+  const tbody = document.getElementById('users_tbody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--txt3)"><div style="font-size:24px;margin-bottom:8px">👥</div>No users found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr data-id="${u.id}" data-email="${escHtml(u.email)}">
+      <td>
+        <div style="font-weight:500">${escHtml(u.email)}</div>
+        <div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">${u.id.slice(0,8)}…</div>
+      </td>
+      <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+      <td style="color:var(--txt2)">${fmtDate(u.created_at)}</td>
+      <td style="color:var(--txt2)">${u.last_sign_in_at ? fmtDate(u.last_sign_in_at) : '—'}</td>
+      <td>${u.has_data
+        ? '<span style="color:var(--c1);font-size:12px">✓ Yes</span>'
+        : '<span style="color:var(--txt3)">—</span>'}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${u.role === 'user'
+            ? `<button class="action-btn promote" onclick="changeRole('${u.id}','admin')">Make Admin</button>`
+            : `<button class="action-btn demote" onclick="changeRole('${u.id}','user')">Remove Admin</button>`}
+          <button class="action-btn danger" onclick="askDelete('${u.id}','${escHtml(u.email)}')">Delete</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterTable(q) {
+  const filtered = q
+    ? allUsers.filter(u => u.email.toLowerCase().includes(q.toLowerCase()))
+    : allUsers;
+  renderTable(filtered);
+}
+
+async function changeRole(userId, newRole) {
+  const { data: { session } } = await sb.auth.getSession();
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId, role: newRole })
+    });
+    if (!res.ok) throw new Error('Failed');
+    const u = allUsers.find(x => x.id === userId);
+    if (u) u.role = newRole;
+    updateStats(allUsers);
+    renderTable(allUsers);
+    toast('Role updated to ' + newRole, 'ok');
+  } catch(e) {
+    toast('Failed to update role', 'err');
+  }
+}
+
+function askDelete(userId, email) {
+  pendingDeleteId = userId;
+  document.getElementById('confirm_text').textContent =
+    `Delete "${email}"? All their data will be permanently removed.`;
+  document.getElementById('confirm_modal').classList.add('show');
+}
+
+async function confirmDelete() {
+  if (!pendingDeleteId) return;
+  const { data: { session } } = await sb.auth.getSession();
+  closeModal();
+  try {
+    const res = await fetch('/api/admin/users', {
+      method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId: pendingDeleteId })
+    });
+    if (!res.ok) throw new Error('Failed');
+    allUsers = allUsers.filter(u => u.id !== pendingDeleteId);
+    updateStats(allUsers);
+    renderTable(allUsers);
+    toast('User deleted', 'ok');
+  } catch(e) {
+    toast('Failed to delete user', 'err');
+  }
+  pendingDeleteId = null;
+}
+
+function closeModal() {
+  document.getElementById('confirm_modal').classList.remove('show');
+  pendingDeleteId = null;
+}
+
+async function doLogout() {
+  if (sb) await sb.auth.signOut();
+  window.location.replace('/');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+}
+</script>
+</body>
+</html>
